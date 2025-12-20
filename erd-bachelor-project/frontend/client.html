@@ -1,0 +1,1490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ERD Diagram</title>
+    <style>
+
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap');
+
+        :root {
+            --google-blue: #4285F4;
+            --google-blue-dark: #1a73e8;
+            --google-red: #DB4437;
+            --google-green: #0F9D58;
+            --google-yellow: #F4B400;
+            
+            --color-weak: #DB4437;
+            --color-identifying: #6b21a8;
+            
+            /* Light Mode Palette */
+            --bg-primary: #f8f9fa;       /* Page background */
+            --bg-secondary: #ffffff;     /* Container/Card background */
+            --bg-tertiary: #f1f3f4;       /* Column background */
+            --border-color: #dadce0;
+            --text-primary: #202124;
+            --text-secondary: #5f6368;
+            --shadow-color: rgba(0,0,0,0.05);
+
+            --google-blue-light: #e8f0fe;
+            --google-red-light: #fce8e6;
+            --google-green-light: #e6f4ea;
+            --google-yellow-light: #fef7e0;
+            --google-yellow-dark-text: #b38000;
+            
+            --font-body: 'Roboto', 'Segoe UI', sans-serif;
+            --font-mono: 'Roboto Mono', monospace;
+        }
+
+        /* Dark Mode Palette (High-Contrast) */
+        body[data-theme="dark"] {
+            --bg-primary: #202124;       /* Page background (darkest) */
+            --bg-secondary: #292a2d;     /* Container/Card background (lighter) */
+            --bg-tertiary: #303134;       /* Column background */
+            --border-color: #5f6368;
+            --text-primary: #e8eaed;     /* Bright text */
+            --text-secondary: #bdc1c6;   /* Medium-bright text */
+            --shadow-color: rgba(0,0,0,0.2);
+
+            --google-blue-light: #28354b;
+            --google-red-light: #442f2d;
+            --google-green-light: #2a3d34;
+            --google-yellow-light: #443c2a;
+            --google-yellow-dark-text: #F4B400;
+            
+            --color-weak: #f28b82;
+            --color-identifying: #c58af9;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        /* --- Animations --- */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes waterfall-in {
+            from { opacity: 0; transform: translateY(10px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .waterfall-item {
+            animation: waterfall-in 0.3s ease-out forwards;
+            opacity: 0; /* Start hidden */
+        }
+        
+        /* --- Spinner --- */
+        .g-spinner {
+            display: inline-block; width: 20px; height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%; border-top-color: #fff;
+            animation: spin 0.6s linear infinite;
+        }
+        .g-button-outlined .g-spinner {
+            border-color: rgba(66, 133, 244, 0.3);
+            border-top-color: var(--google-blue);
+        }
+        
+        body {
+            font-family: var(--font-body); background: var(--bg-primary);
+            min-height: 100vh; padding: 20px; color: var(--text-primary);
+            transition: background 0.3s, color 0.3s;
+        }
+        
+        /* Renamed to avoid conflict */
+        .container.page-wrapper {
+            max-width: 1400px; margin: 0 auto; background: var(--bg-secondary);
+            border-radius: 8px; border: 1px solid var(--border-color);
+            box-shadow: 0 4px 12px var(--shadow-color);
+            overflow: hidden; transition: background 0.3s, border-color 0.3s;
+        }
+        
+        .header {
+            background: var(--bg-secondary); color: var(--text-primary);
+            padding: 24px 30px; text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .header h1 { font-size: 2em; margin-bottom: 10px; }
+        .header p { color: var(--text-secondary); font-size: 1.1em; }
+        
+        /* --- Theme Toggle Switch --- */
+        .theme-switch-wrapper { display: flex; align-items: center; }
+        .theme-switch-label { margin-right: 10px; color: var(--text-secondary); font-size: 0.9em; }
+        .theme-switch { position: relative; display: inline-block; width: 50px; height: 26px; }
+        .theme-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--bg-tertiary); transition: .3s; border-radius: 26px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px; background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+        .slider-icon { position: absolute; top: 50%; transform: translateY(-50%); font-size: 12px; }
+        .slider-icon.sun { left: 6px; }
+        .slider-icon.moon { right: 6px; display: none; }
+        input:checked + .slider { background-color: var(--google-blue); }
+        input:checked + .slider:before { transform: translateX(24px); }
+        body[data-theme="dark"] .slider-icon.sun { display: none; }
+        body[data-theme="dark"] .slider-icon.moon { display: block; }
+        
+        .content { padding: 30px; }
+    
+        
+        .folder-upload-container {
+            --transition: 350ms;
+            --folder-W: 70px;   /* Adjusted width */
+            --folder-H: 50px;   /* Adjusted height */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 10px;
+            /* Student Theme Colors */
+            background: linear-gradient(135deg, var(--google-blue-light), var(--google-blue));
+            border-radius: 15px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
+            height: calc(var(--folder-H) * 2);
+            position: relative;
+        }
+
+        .folder {
+            position: absolute;
+            top: -15px;
+            left: calc(50% - (var(--folder-W) / 2)); /* Center the folder dynamically */
+            animation: float 3s infinite ease-in-out;
+            transition: transform var(--transition) ease;
+        }
+
+        .folder:hover {
+            transform: scale(1.05);
+        }
+
+        .folder .front-side,
+        .folder .back-side {
+            position: absolute;
+            transition: transform var(--transition);
+            transform-origin: bottom center;
+        }
+
+        .folder .back-side::before,
+        .folder .back-side::after {
+            content: "";
+            display: block;
+            background-color: white; /* Base for layering */
+            opacity: 0.5;
+            z-index: 0;
+            width: var(--folder-W);
+            height: var(--folder-H);
+            position: absolute;
+            transform-origin: bottom center;
+            border-radius: 15px;
+            transition: transform 350ms;
+            z-index: 0;
+        }
+
+        .folder-upload-container:hover .back-side::before {
+            transform: rotateX(-5deg) skewX(5deg);
+        }
+        .folder-upload-container:hover .back-side::after {
+            transform: rotateX(-15deg) skewX(12deg);
+        }
+
+        .folder .front-side {
+            z-index: 1;
+        }
+
+        .folder-upload-container:hover .front-side {
+            transform: rotateX(-40deg) skewX(15deg);
+        }
+
+        .folder .tip {
+            /* Student Theme Tip Color */
+            background: linear-gradient(135deg, var(--google-yellow), var(--google-yellow-dark-text));
+            width: calc(var(--folder-W) * 0.7); /* Adjusted tip width */
+            height: 15px; /* Adjusted tip height */
+            border-radius: 10px 10px 0 0; /* Adjusted border-radius */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Softer shadow */
+            position: absolute;
+            top: -7px; /* Adjusted position */
+            left: calc(50% - (calc(var(--folder-W) * 0.7) / 2)); /* Center tip */
+            z-index: 2;
+        }
+
+        .folder .cover {
+            /* Student Theme Cover Color */
+            background: linear-gradient(135deg, var(--google-blue), var(--google-blue-dark));
+            width: var(--folder-W);
+            height: var(--folder-H);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2); /* Softer shadow */
+            border-radius: 8px; /* Softer border-radius */
+        }
+
+        .custom-file-upload {
+            font-size: 1.1em;
+            color: #ffffff;
+            font-weight: 500;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: background var(--transition) ease;
+            display: inline-block;
+            width: 100%;
+            padding: 10px 35px;
+            position: relative;
+        }
+
+        .custom-file-upload:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        .custom-file-upload input[type="file"] {
+            display: none;
+        }
+        
+        /* --- FIX: Styling for the file name <p> tag --- */
+        .upload-file-name {
+            margin-top: 15px; /* Spacing from folder */
+            color: var(--google-blue); /* Student theme color */
+            font-weight: 500;
+            font-size: 0.9em;
+            text-align: center;
+            /* Ensure it wraps */
+            word-break: break-all;
+            padding: 0 10px;
+            /* Added min-height to prevent layout shift */
+            min-height: 1.2em; 
+        }
+        
+        .upload-file-name.theme-teacher {
+             color: var(--text-secondary); /* TA theme color */
+        }
+        /* --- END FIX --- */
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); } /* Reduced float height */
+            100% { transform: translateY(0px); }
+        }
+
+        /* --- NEW: TA Theme for Uploader (Revised Colors) --- */
+        .folder-upload-container.theme-teacher {
+            background: linear-gradient(135deg, var(--bg-tertiary), var(--text-secondary)); /* Gray tones */
+        }
+        .folder-upload-container.theme-teacher .folder .tip {
+             background: linear-gradient(135deg, var(--google-blue), var(--google-blue-dark)); /* Blue tip for TA */
+        }
+        .folder-upload-container.theme-teacher .folder .cover {
+            background: linear-gradient(135deg, #f1f3f4, #dadce0); /* Lighter gray for cover */
+        }
+        .folder-upload-container.theme-teacher .custom-file-upload {
+            background: rgba(0, 0, 0, 0.1);
+            color: var(--text-primary); /* Text color for TA button */
+        }
+        .folder-upload-container.theme-teacher .custom-file-upload:hover {
+            background: rgba(0, 0, 0, 0.2);
+        }
+        body[data-theme="dark"] .folder-upload-container.theme-teacher .custom-file-upload {
+            color: var(--text-primary);
+        }
+        body[data-theme="dark"] .upload-file-name.theme-teacher {
+            color: var(--text-secondary);
+        }
+        /* =================================================
+        END: Folder Uploader Styles
+        =================================================
+        */
+
+
+        /* --- Button Styles --- */
+        .g-button {
+            padding: 12px 24px; border: none; border-radius: 4px; font-size: 0.9em;
+            font-weight: 500; cursor: pointer; transition: all 0.2s;
+            text-transform: uppercase; letter-spacing: 0.5px; min-height: 44px; 
+            display: inline-flex; align-items: center; justify-content: center;
+        }
+        .g-button-outlined { background: transparent; color: var(--google-blue); border: 1px solid var(--border-color); }
+        .g-button-outlined:hover { background: var(--google-blue-light); border-color: var(--google-blue); }
+        .g-button-contained { background: var(--google-blue); color: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06); }
+        .g-button-contained:hover { background: var(--google-blue-dark); box-shadow: 0 3px 6px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.08); }
+        .g-button:disabled { background: #ccc; color: #888; box-shadow: none; cursor: not-allowed; opacity: 0.7; }
+        .grade-btn { background: var(--google-green); }
+        .grade-btn:hover { background: #0D854A; }
+        .controls-row { display: flex; gap: 10px; margin-bottom: 25px; justify-content: center; }
+        
+        /* --- Stats Cards --- */
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card {
+            background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary);
+            padding: 20px; border-radius: 8px; text-align: center;
+            opacity: 0; animation: fadeIn 0.5s ease-out forwards;
+        }
+        .stat-card h3 { font-size: 2.5em; margin-bottom: 5px; color: var(--google-blue); }
+        .stat-card p { color: var(--text-secondary); font-weight: 500; }
+        .stats-file2 .stat-card h3 { color: var(--google-green); }
+        
+        .section-title {
+            color: var(--text-primary); margin-bottom: 15px; font-size: 1.3em;
+            font-weight: 500; border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        
+        /* --- Collapsible ERD Item Styles --- */
+        .erd-item {
+            background: var(--bg-secondary); border: 1px solid var(--border-color);
+            margin-bottom: 10px; border-radius: 5px;
+            box-shadow: 0 1px 3px var(--shadow-color); transition: all 0.3s;
+        }
+        .collapsible-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px; cursor: pointer; transition: background 0.2s;
+        }
+        .collapsible-header:hover { background: var(--bg-tertiary); }
+        .collapsible-header h3 {
+            color: var(--text-primary); margin: 0; font-size: 1.1em;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .chevron-icon {
+            font-size: 1.4em; font-weight: bold; color: var(--text-secondary);
+            transition: transform 0.3s; transform: rotate(0deg); /* Start closed */
+        }
+        .erd-item:not(.collapsed) .chevron-icon { transform: rotate(90deg); } /* Open state */
+        
+        .attribute-list {
+            max-height: 0; padding: 0 15px 0 15px; /* Start with 0 padding */
+            overflow: hidden; transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out, opacity 0.3s;
+            opacity: 0;
+        }
+        .erd-item:not(.collapsed) .attribute-list {
+            max-height: 1000px; padding: 0 15px 15px 15px; /* Open state */
+            opacity: 1;
+        }
+        .attribute-list ul {
+            list-style: none; padding-left: 25px;
+            border-top: 1px solid var(--border-color); padding-top: 10px;
+        }
+        .attribute-list li { padding: 6px 0; color: var(--text-secondary); font-size: 0.95em; }
+        .attribute-list li.pk, .attribute-list li.pk-file2 { color: var(--google-blue); font-weight: 500; }
+        body[data-theme="dark"] .attribute-list li.pk { color: #8ab4f8; }
+        .attribute-list li.pk-file2 { color: var(--text-secondary); }
+        .attribute-list li.pk::before, .attribute-list li.pk-file2::before { content: "🔑"; margin-right: 8px; font-size: 1.1em; }
+        
+        .text-weak { color: var(--color-weak); font-weight: 500; }
+        .text-identifying { color: var(--color-identifying); font-weight: 500; }
+        .text-ternary { color: #f97316; font-weight: 500; }
+
+        /* --- Inheritance Styles --- */
+        .text-inheritance { color: #8b5cf6; font-weight: 500; }
+        .inheritance-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        .badge-disjoint {
+            background: var(--google-red-light);
+            border: 1px solid var(--google-red);
+            color: var(--google-red);
+        }
+        .badge-union {
+            background: var(--google-green-light);
+            border: 1px solid var(--google-green);
+            color: var(--google-green);
+        }
+        .badge-overlapping {
+            background: var(--google-yellow-light);
+            border: 1px solid var(--google-yellow);
+            color: var(--google-yellow-dark-text);
+        }
+        
+        .connection-summary {
+            font-size: 0.9em; color: var(--text-secondary);
+            padding: 10px 0;
+        }
+        .connection-summary strong {
+            color: var(--text-primary);
+        }
+        /* --- End Collapsible Styles --- */
+
+        .comparison-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .single-layout { display: grid; grid-template-columns: 1fr; }
+        .diagram-column {
+            background: var(--bg-tertiary); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 20px; min-height: 500px;
+            max-height: 800px; overflow-y: auto; opacity: 0;
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+        .diagram-title {
+            text-align: center; padding: 12px; margin: -20px -20px 20px -20px;
+            border-radius: 8px 8px 0 0; color: white; font-weight: 500;
+            font-size: 1.1em; border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+        .diagram-title.file1 { background: var(--google-blue); }
+        .diagram-title.file2 { background: var(--text-secondary); }
+
+        .grading-section {
+            background: var(--google-blue-light); border: 1px solid var(--google-blue);
+            border-radius: 8px; padding: 25px; margin: 30px 0;
+            color: var(--text-primary); opacity: 0;
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+        .grading-section h2 { margin-bottom: 15px; display: flex; align-items: center; gap: 10px; font-size: 1.8em; color: var(--google-blue); }
+        .grading-info {
+            background: var(--bg-secondary); padding: 15px; border-radius: 8px;
+            margin-bottom: 15px; font-size: 0.95em;
+            border-left: 4px solid var(--google-blue); color: var(--text-secondary);
+        }
+        
+        /* =================================================
+        AI Grading Report Styles
+        =================================================
+        */
+        
+        .grading-content {
+            background: var(--bg-secondary); color: var(--text-primary);
+            padding: 30px; border-radius: 8px; border: 1px solid var(--border-color);
+            line-height: 1.7; font-size: 1em; max-height: 700px;
+            overflow-y: auto; 
+            font-family: var(--font-body); /* <-- Use body font */
+            white-space: normal;           /* <-- Use normal whitespace */
+        }
+        
+        .grading-content-inner {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .grading-content-inner .waterfall-item {
+            margin-bottom: 15px;
+        }
+
+        .grading-content-inner h3 {
+            color: var(--text-primary); 
+            margin-bottom: 5px;
+            padding-bottom: 8px; 
+            border-bottom: 2px solid var(--google-blue);
+            font-size: 1.3em;
+        }
+        .grading-content-inner h3:first-child {
+            margin-top: 0;
+        }
+        
+        .grading-content-inner h4 { 
+            color: var(--text-primary); 
+            font-weight: 500;
+            margin-top: 10px; 
+            margin-bottom: 5px; 
+            font-size: 1.1em; 
+        }
+        
+        .grade-score-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .grade-score {
+            background: var(--google-blue-light);
+            border: 1px solid var(--google-blue);
+            color: var(--google-blue);
+            padding: 10px 15px; border-radius: 20px;
+            font-size: 1em; font-weight: 500;
+            transition: background 0.3s, border-color 0.3s, color 0.3s;
+        }
+        .grade-score.letter-grade { }
+
+        /* Grade Color Modifiers */
+        .grade-score.grade-good {
+            background: var(--google-green-light);
+            border-color: var(--google-green);
+            color: var(--google-green);
+        }
+        .grade-score.grade-average {
+            background: var(--google-yellow-light);
+            border-color: var(--google-yellow);
+            color: var(--google-yellow-dark-text);
+        }
+        .grade-score.grade-poor {
+            background: var(--google-red-light);
+            border-color: var(--google-red);
+            color: var(--google-red);
+        }
+
+        .grade-breakdown { 
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
+            gap: 10px; margin: 0;
+        }
+        .breakdown-item { 
+            background: var(--bg-tertiary); padding: 12px; border-radius: 6px;
+            border: 1px solid var(--border-color); 
+        }
+        .breakdown-item strong {
+            color: var(--text-primary);
+        }
+        
+        .feedback-item { 
+            padding: 0; 
+            margin: 0 0 0 20px; /* Indent bullet points */
+            line-height: 1.6;
+            color: var(--text-secondary);
+        }
+        .feedback-item strong {
+            color: var(--text-primary);
+        }
+        
+        .correct-item {
+            background: var(--google-green-light); padding: 12px;
+            border-radius: 6px; border-left: 3px solid var(--google-green);
+        }
+        .incorrect-item {
+            background: var(--google-red-light); padding: 12px;
+            border-radius: 6px; border-left: 3px solid var(--google-red);
+        }
+        .grading-loading { text-align: center; padding: 40px; font-size: 1.1em; color: var(--text-secondary); }
+
+        /* =================================================
+        Page Flip Loader Styles
+        =================================================
+        */
+        .loader-wrapper {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 300px;
+            padding: 40px 0;
+            color: var(--text-secondary); /* Match loader text */
+            margin-top: 50px;
+        }
+        .grading-content .loader-wrapper {
+            margin-top: 0;
+            min-height: 200px;
+        }
+        
+        .loader {
+            --background: linear-gradient(135deg, #23C4F8, #275EFE);
+            --shadow: rgba(39, 94, 254, 0.28);
+            /* Use theme variables */
+            --page: var(--bg-tertiary); 
+            --page-fold: var(--border-color);
+            --duration: 3s;
+            width: 200px;
+            height: 140px;
+            position: relative;
+        }
+
+        .loader:before, .loader:after {
+            --r: -6deg;
+            content: "";
+            position: absolute;
+            bottom: 8px;
+            width: 120px;
+            top: 80%;
+            box-shadow: 0 16px 12px var(--shadow);
+            transform: rotate(var(--r));
+        }
+
+        .loader:before {
+            left: 4px;
+        }
+
+        .loader:after {
+            --r: 6deg;
+            right: 4px;
+        }
+
+        .loader div {
+            width: 100%;
+            height: 100%;
+            border-radius: 13px;
+            position: relative;
+            z-index: 1;
+            perspective: 600px;
+            box-shadow: 0 4px 6px var(--shadow);
+            background-image: var(--background);
+        }
+
+        .loader div ul {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            position: relative;
+        }
+
+        .loader div ul li {
+            --r: 180deg;
+            --o: 0;
+            --c: var(--page);
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            transform-origin: 100% 50%;
+            color: var(--c);
+            opacity: var(--o);
+            transform: rotateY(var(--r));
+            -webkit-animation: var(--duration) ease infinite;
+            animation: var(--duration) ease infinite;
+        }
+
+        .loader div ul li:nth-child(2) {
+            --c: var(--page-fold);
+            -webkit-animation-name: page-2;
+            animation-name: page-2;
+        }
+
+        .loader div ul li:nth-child(3) {
+            --c: var(--page-fold);
+            -webkit-animation-name: page-3;
+            animation-name: page-3;
+        }
+
+        .loader div ul li:nth-child(4) {
+            --c: var(--page-fold);
+            -webkit-animation-name: page-4;
+            animation-name: page-4;
+        }
+
+        .loader div ul li:nth-child(5) {
+            --c: var(--page-fold);
+            -webkit-animation-name: page-5;
+            animation-name: page-5;
+        }
+
+        .loader div ul li svg {
+            width: 90px;
+            height: 120px;
+            display: block;
+        }
+
+        .loader div ul li:first-child {
+            --r: 0deg;
+            --o: 1;
+        }
+
+        .loader div ul li:last-child {
+            --o: 1;
+        }
+
+        .loader span {
+            display: block;
+            left: 0;
+            right: 0;
+            top: 100%;
+            margin-top: 20px;
+            text-align: center;
+            color: var(--text-secondary); /* Use theme variable */
+            font-size: 1.1em;
+        }
+
+        @keyframes page-2 {
+            0% {
+                transform: rotateY(180deg);
+                opacity: 0;
+            }
+
+            20% {
+                opacity: 1;
+            }
+
+            35%, 100% {
+                opacity: 0;
+            }
+
+            50%, 100% {
+                transform: rotateY(0deg);
+            }
+        }
+
+        @keyframes page-3 {
+            15% {
+                transform: rotateY(180deg);
+                opacity: 0;
+            }
+
+            35% {
+                opacity: 1;
+            }
+
+            50%, 100% {
+                opacity: 0;
+            }
+
+            65%, 100% {
+                transform: rotateY(0deg);
+            }
+        }
+
+        @keyframes page-4 {
+            30% {
+                transform: rotateY(180deg);
+                opacity: 0;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            65%, 100% {
+                opacity: 0;
+            }
+
+            80%, 100% {
+                transform: rotateY(0deg);
+            }
+        }
+
+        @keyframes page-5 {
+            45% {
+                transform: rotateY(180deg);
+                opacity: 0;
+            }
+
+            65% {
+                opacity: 1;
+            }
+
+            80%, 100% {
+                opacity: 0;
+            }
+
+            95%, 100% {
+                transform: rotateY(0deg);
+            }
+        }
+
+        /* =================================================
+        NEW: Uploader & Stats Grid (Replaced inline styles)
+        =================================================
+        */
+        .uploader-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 20px;
+            padding: 0 20px;
+            text-align: left;
+        }
+
+        .stats-comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        /* =================================================
+        NEW: Mobile Responsive Styles
+        =================================================
+        */
+        @media (max-width: 768px) {
+            body {
+                padding: 0; /* Remove body padding for full-width */
+            }
+
+            .container.page-wrapper {
+                border-radius: 0;
+                border: none;
+                box-shadow: none;
+            }
+
+            .content {
+                padding: 15px; /* Reduce content padding */
+            }
+
+            /* Stack the header elements */
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 1.5em;
+            }
+
+            .header p {
+                font-size: 1em;
+                line-height: 1.4;
+            }
+            
+            /* Stacks the two uploader boxes */
+            .uploader-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+                padding: 0;
+            }
+
+            .folder-upload-container {
+                height: calc(var(--folder-H) * 1.6);
+            }
+
+            .custom-file-upload {
+                font-size: 1em;
+            }
+
+            /* Stack buttons */
+            .controls-row {
+                flex-direction: column;
+                width: 100%;
+                gap: 15px;
+            }
+
+            .g-button {
+                width: 100%; /* Make buttons full-width */
+            }
+
+            /* Stacks the two stats sections */
+            .stats-comparison-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+
+            .stats {
+                gap: 15px;
+            }
+
+            .grading-section h2 {
+                font-size: 1.4em;
+                text-align: center; /* Center title on mobile */
+            }
+
+            .grading-info {
+                font-size: 0.9em;
+            }
+
+            /* Stacks the main ERD comparison columns */
+            .comparison-layout {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+<body data-theme="light"> 
+    <div class="container page-wrapper">
+        <div class="header">
+            <div>
+                <h1>ERD Visualizer & AI Grader</h1>
+                <p>Upload student & TA SVG files to compare and automatically grade ERD submissions</p>
+            </div>
+            <div class="theme-switch-wrapper">
+                <span class="theme-switch-label">Mode</span>
+                <label class="theme-switch" for="theme-toggle">
+                    <input type="checkbox" id="theme-toggle" />
+                    <span class="slider">
+                        <span class="slider-icon sun">☀️</span>
+                        <span class="slider-icon moon">🌙</span>
+                    </span>
+                </label>
+            </div>
+        </div>
+        
+        <div class="content">
+            <div class="uploader-grid">
+                
+                <div> <div class="folder-upload-container">
+                        <div class="folder">
+                            <div class="front-side">
+                                <div class="tip"></div>
+                                <div class="cover"></div>
+                            </div>
+                            <div class="back-side cover"></div>
+                        </div>
+                        <label for="file1" class="custom-file-upload">
+                            <input type="file" id="file1" accept=".svg" />
+                            Student ERD (SVG File)
+                        </label>
+                    </div>
+                    <p id="file1Name" class="upload-file-name"></p>
+                </div>
+
+                <div> <div class="folder-upload-container theme-teacher">
+                        <div class="folder">
+                            <div class="front-side">
+                                <div class="tip"></div>
+                                <div class="cover"></div>
+                            </div>
+                            <div class="back-side cover"></div>
+                        </div>
+                        <label for="file2" class="custom-file-upload">
+                            <input type="file" id="file2" accept=".svg" />
+                            TA ERD (SVG File)
+                        </label>
+                    </div>
+                    <p id="file2Name" class="upload-file-name theme-teacher"></p>
+                </div>
+
+            </div>
+            <div class="controls-row">
+                <button id="convert" class="g-button g-button-contained">Convert & Render</button>
+            </div>
+            
+            <div id="statsSection" style="display: none;">
+                <h2 class="section-title" style="text-align: center; margin-bottom: 20px; border-bottom: none;">Statistics</h2>
+                <div id="statsContainer"></div>
+            </div>
+
+            <div id="gradingSection" style="display: none;" class="grading-section">
+                <h2>AI-Powered ERD Grading</h2>
+                <div class="grading-info">
+                    <strong>Note:</strong> This feature grades the <strong>Student ERD</strong> (blue) against the <strong>TA ERD</strong> (gray) using AI.
+                </div>
+                <div class="controls-row">
+                    <button id="gradeBtn" class="g-button g-button-contained" style="background: var(--google-green); font-size: 1em;">Generate Grade & Feedback</button>
+                </div>
+                <div id="gradingContent"></div>
+            </div>
+
+            <div id="layoutContainer">
+                <p style="color: var(--text-secondary); text-align: center; margin-top: 50px;">Please upload an SVG file to get started.</p>
+            </div>
+        </div> </div> <script>
+        // --- All variables ---
+        const fileInput1 = document.getElementById('file1');
+        const fileInput2 = document.getElementById('file2');
+        const file1Name = document.getElementById('file1Name');
+        const file2Name = document.getElementById('file2Name');
+        const convertBtn = document.getElementById('convert');
+        const statsSection = document.getElementById('statsSection');
+        const statsContainer = document.getElementById('statsContainer');
+        const layoutContainer = document.getElementById('layoutContainer');
+        const gradingSection = document.getElementById('gradingSection');
+        const gradingContent = document.getElementById('gradingContent');
+        const gradeBtn = document.getElementById('gradeBtn');
+        const themeToggle = document.getElementById('theme-toggle');
+        let currentData1 = null;
+        let currentData2 = null;
+        const convertBtnText = convertBtn.innerHTML;
+        const gradeBtnText = gradeBtn.innerHTML;
+
+        // --- NEW: Reusable Loader Function ---
+        function getLoaderHTML(text) {
+            // Using template literal for cleaner HTML string
+            return `
+            <div class="loader-wrapper">
+                <div class="loader">
+                    <div>
+                        <ul>
+                            <li><svg fill="currentColor" viewBox="0 0 90 120"><path d="M90,0 L90,120 L11,120 C4.92486775,120 0,115.075132 0,109 L0,11 C0,4.92486775 4.92486775,0 11,0 L90,0 Z M71.5,81 L18.5,81 C17.1192881,81 16,82.1192881 16,83.5 C16,84.8254834 17.0315359,85.9100387 18.3356243,85.9946823 L18.5,86 L71.5,86 C72.8807119,86 74,84.8807119 74,83.5 C74,82.1745166 72.9684641,81.0899613 71.6643757,81.0053177 L71.5,81 Z M71.5,57 L18.5,57 C17.1192881,57 16,58.1192881 16,59.5 C16,60.8254834 17.0315359,61.9100387 18.3356243,61.9946823 L18.5,62 L71.5,62 C72.8807119,62 74,60.8807119 74,59.5 C74,58.1192881 72.8807119,57 71.5,57 Z M71.5,33 L18.5,33 C17.1192881,33 16,34.1192881 16,35.5 C16,36.8254834 17.0315359,37.9100387 18.3356243,37.9946823 L18.5,38 L71.5,38 C72.8807119,38 74,36.8807119 74,35.5 C74,34.1192881 72.8807119,33 71.5,33 Z"></path></svg></li>
+                            <li><svg fill="currentColor" viewBox="0 0 90 120"><path d="M90,0 L90,120 L11,120 C4.92486775,120 0,115.075132 0,109 L0,11 C0,4.92486775 4.92486775,0 11,0 L90,0 Z M71.5,81 L18.5,81 C17.1192881,81 16,82.1192881 16,83.5 C16,84.8254834 17.0315359,85.9100387 18.3356243,85.9946823 L18.5,86 L71.5,86 C72.8807119,86 74,84.8807119 74,83.5 C74,82.1745166 72.9684641,81.0899613 71.6643757,81.0053177 L71.5,81 Z M71.5,57 L18.5,57 C17.1192881,57 16,58.1192881 16,59.5 C16,60.8254834 17.0315359,61.9100387 18.3356243,61.9946823 L18.5,62 L71.5,62 C72.8807119,62 74,60.8807119 74,59.5 C74,58.1192881 72.8807119,57 71.5,57 Z M71.5,33 L18.5,33 C17.1192881,33 16,34.1192881 16,35.5 C16,36.8254834 17.0315359,37.9100387 18.3356243,37.9946823 L18.5,38 L71.5,38 C72.8807119,38 74,36.8807119 74,35.5 C74,34.1192881 72.8807119,33 71.5,33 Z"></path></svg></li>
+                            <li><svg fill="currentColor" viewBox="0 0 90 120"><path d="M90,0 L90,120 L11,120 C4.92486775,120 0,115.075132 0,109 L0,11 C0,4.92486775 4.92486775,0 11,0 L90,0 Z M71.5,81 L18.5,81 C17.1192881,81 16,82.1192881 16,83.5 C16,84.8254834 17.0315359,85.9100387 18.3356243,85.9946823 L18.5,86 L71.5,86 C72.8807119,86 74,84.8807119 74,83.5 C74,82.1745166 72.9684641,81.0899613 71.6643757,81.0053177 L71.5,81 Z M71.5,57 L18.5,57 C17.1192881,57 16,58.1192881 16,59.5 C16,60.8254834 17.0315359,61.9100387 18.3356243,61.9946823 L18.5,62 L71.5,62 C72.8807119,62 74,60.8807119 74,59.5 C74,58.1192881 72.8807119,57 71.5,57 Z M71.5,33 L18.5,33 C17.1192881,33 16,34.1192881 16,35.5 C16,36.8254834 17.0315359,37.9100387 18.3356243,37.9946823 L18.5,38 L71.5,38 C72.8807119,38 74,36.8807119 74,35.5 C74,34.1192881 72.8807119,33 71.5,33 Z"></path></svg></li>
+                            <li><svg fill="currentColor" viewBox="0 0 90 120"><path d="M90,0 L90,120 L11,120 C4.92486775,120 0,115.075132 0,109 L0,11 C0,4.92486775 4.92486775,0 11,0 L90,0 Z M71.5,81 L18.5,81 C17.1192881,81 16,82.1192881 16,83.5 C16,84.8254834 17.0315359,85.9100387 18.3356243,85.9946823 L18.5,86 L71.5,86 C72.8807119,86 74,84.8807119 74,83.5 C74,82.1745166 72.9684641,81.0899613 71.6643757,81.0053177 L71.5,81 Z M71.5,57 L18.5,57 C17.1192881,57 16,58.1192881 16,59.5 C16,60.8254834 17.0315359,61.9100387 18.3356243,61.9946823 L18.5,62 L71.5,62 C72.8807119,62 74,60.8807119 74,59.5 C74,58.1192881 72.8807119,57 71.5,57 Z M71.5,33 L18.5,33 C17.1192881,33 16,34.1192881 16,35.5 C16,36.8254834 17.0315359,37.9100387 18.3356243,37.9946823 L18.5,38 L71.5,38 C72.8807119,38 74,36.8807119 74,35.5 C74,34.1192881 72.8807119,33 71.5,33 Z"></path></svg></li>
+                            <li><svg fill="currentColor" viewBox="0 0 90 120"><path d="M90,0 L90,120 L11,120 C4.92486775,120 0,115.075132 0,109 L0,11 C0,4.92486775 4.92486775,0 11,0 L90,0 Z M71.5,81 L18.5,81 C17.1192881,81 16,82.1192881 16,83.5 C16,84.8254834 17.0315359,85.9100387 18.3356243,85.9946823 L18.5,86 L71.5,86 C72.8807119,86 74,84.8807119 74,83.5 C74,82.1745166 72.9684641,81.0899613 71.6643757,81.0053177 L71.5,81 Z M71.5,57 L18.5,57 C17.1192881,57 16,58.1192881 16,59.5 C16,60.8254834 17.0315359,61.9100387 18.3356243,61.9946823 L18.5,62 L71.5,62 C72.8807119,62 74,60.8807119 74,59.5 C74,58.1192881 72.8807119,57 71.5,57 Z M71.5,33 L18.5,33 C17.1192881,33 16,34.1192881 16,35.5 C16,36.8254834 17.0315359,37.9100387 18.3356243,37.9946823 L18.5,38 L71.5,38 C72.8807119,38 74,36.8807119 74,35.5 C74,34.1192881 72.8807119,33 71.5,33 Z"></path></svg></li>
+                            <li><svg fill="currentColor" viewBox="0 0 90 120"><path d="M90,0 L90,120 L11,120 C4.92486775,120 0,115.075132 0,109 L0,11 C0,4.92486775 4.92486775,0 11,0 L90,0 Z M71.5,81 L18.5,81 C17.1192881,81 16,82.1192881 16,83.5 C16,84.8254834 17.0315359,85.9100387 18.3356243,85.9946823 L18.5,86 L71.5,86 C72.8807119,86 74,84.8807119 74,83.5 C74,82.1745166 72.9684641,81.0899613 71.6643757,81.0053177 L71.5,81 Z M71.5,57 L18.5,57 C17.1192881,57 16,58.1192881 16,59.5 C16,60.8254834 17.0315359,61.9100387 18.3356243,61.9946823 L18.5,62 L71.5,62 C72.8807119,62 74,60.8807119 74,59.5 C74,58.1192881 72.8807119,57 71.5,57 Z M71.5,33 L18.5,33 C17.1192881,33 16,34.1192881 16,35.5 C16,36.8254834 17.0315359,37.9100387 18.3356243,37.9946823 L18.5,38 L71.5,38 C72.8807119,38 74,36.8807119 74,35.5 C74,34.1192881 72.8807119,33 71.5,33 Z"></path></svg></li>
+                        </ul>
+                    </div>
+                    <span>${text}</span>
+                </div>
+            </div>
+            `;
+        }
+        
+        // --- Global function to toggle collapsible items ---
+        function toggleCollapse(headerElement) {
+            const item = headerElement.closest('.erd-item');
+            item.classList.toggle('collapsed');
+        }
+        
+        // --- Theme Toggle Logic ---
+        function setTheme(theme) {
+            document.body.dataset.theme = theme;
+            localStorage.setItem('theme', theme);
+            themeToggle.checked = theme === 'dark';
+        }
+        themeToggle.addEventListener('change', () => {
+            setTheme(themeToggle.checked ? 'dark' : 'light');
+        });
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            setTheme(savedTheme || (prefersDark ? 'dark' : 'light'));
+        });
+        
+        // --- File Name Display ---
+        fileInput1.addEventListener('change', (e) => { if(e.target.files[0]) file1Name.textContent = e.target.files[0].name; });
+        fileInput2.addEventListener('change', (e) => { if(e.target.files[0]) file2Name.textContent = e.target.files[0].name; });
+
+        // --- Convert Button Logic ---
+        convertBtn.addEventListener('click', async () => {
+            const f1 = fileInput1.files[0];
+            const f2 = fileInput2.files[0];
+            if(!f1){ alert('Please upload the Student ERD (SVG File) to begin.'); return; }
+            try {
+                convertBtn.disabled = true;
+                convertBtn.innerHTML = '<div class="g-spinner"></div>';
+                
+                layoutContainer.innerHTML = getLoaderHTML('Processing SVG files...');
+                
+                const fd1 = new FormData();
+                fd1.append('file', f1);
+                const res1 = await fetch('/api/convert', { method: 'POST', body: fd1 });
+                if(!res1.ok){ const err = await res1.json(); throw new Error('Error converting Student file: ' + (err.message || 'Server error')); }
+                const data1 = await res1.json();
+                currentData1 = data1.erd;
+
+                if(f2) {
+                    const fd2 = new FormData();
+                    fd2.append('file', f2);
+                    const res2 = await fetch('/api/convert', { method: 'POST', body: fd2 });
+                    if(!res2.ok){ const err = await res2.json(); throw new Error('Error converting TA file: ' + (err.message || 'Server error')); }
+                    const data2 = await res2.json();
+                    currentData2 = data2.erd;
+                } else {
+                    currentData2 = null;
+                }
+
+                displayStats();
+                displayStructures();
+                statsSection.style.display = 'block';
+
+                if(currentData2) {
+                    gradingSection.style.display = 'block';
+                    gradingSection.classList.add('fade-in');
+                    
+                    gradingContent.innerHTML = '<div class="grading-loading">Click "Generate Grade & Feedback" to get AI-powered grading results.</div>';
+                } else {
+                    gradingSection.style.display = 'none';
+                }
+            } catch(err){
+                alert('Error: '+err.message);
+                layoutContainer.innerHTML = `<p style="color: var(--google-red); text-align: center; margin-top: 50px;">${err.message}</p>`;
+                console.error(err);
+            } finally {
+                convertBtn.disabled = false;
+                convertBtn.innerHTML = convertBtnText;
+            }
+        });
+
+        // --- Grade Button Logic (JSON) ---
+        gradeBtn.addEventListener('click', async () => {
+            if(!currentData1 || !currentData2) { alert('Please upload and convert both SVG files first.'); return; }
+
+            try {
+                gradeBtn.disabled = true;
+                gradeBtn.innerHTML = '<div class="g-spinner"></div>';
+                
+                gradingContent.innerHTML = getLoaderHTML('AI is grading... Please wait.');
+                
+                const response = await fetch('/api/grade', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ student_erd: currentData1, teacher_erd: currentData2 })
+                });
+
+                const gradingData = await response.json();
+                
+                if(!response.ok) { 
+                    let errorMsg = gradingData.message || gradingData.error || 'Grading failed';
+                    if (gradingData.raw_response_text) {
+                        errorMsg += `<br><br><strong>Raw AI Response:</strong> ${gradingData.raw_response_text}`;
+                    }
+                    throw new Error(errorMsg); 
+                }
+                
+                await buildHtmlFromJson(gradingData);
+
+            } catch(err) {
+                gradingContent.innerHTML = `<div class="incorrect-item" style="padding: 20px;"><strong>Error:</strong> ${err.message}</div>`;
+                console.error(err);
+            } finally {
+                gradeBtn.disabled = false;
+                gradeBtn.innerHTML = gradeBtnText;
+            }
+        });
+
+        /**
+         * Gets a CSS class based on the letter grade.
+         */
+        function getGradeClass(letterGrade) {
+            if (!letterGrade) return ''; // Default (blue)
+            const grade = letterGrade.toUpperCase().charAt(0); 
+            if (grade === 'A' || grade === 'B') return 'grade-good';
+            if (grade === 'C') return 'grade-average';
+            if (grade === 'D' || grade === 'F') return 'grade-poor';
+            return ''; 
+        }
+
+        /**
+         * --- NEW: Async HTML Builder with Waterfall Effect ---
+         * Builds the HTML report section by section with delays.
+         */
+        async function buildHtmlFromJson(data) {
+            const sanitize = (text) => text || "No feedback provided.";
+            // 1. Clear loader and set up container
+            gradingContent.innerHTML = '<div class="grading-content-inner"></div>';
+            const container = gradingContent.querySelector('.grading-content-inner');
+            
+            // 2. Delay helper
+            const delay = (ms) => new Promise(res => setTimeout(res, ms));
+
+            // 3. Helper to append a full section as one waterfall item
+            const appendSection = (htmlString) => {
+                const sectionWrapper = document.createElement('div');
+                // Add the waterfall-item class so it animates in
+                sectionWrapper.className = 'waterfall-item'; 
+                sectionWrapper.innerHTML = htmlString.trim();
+                container.appendChild(sectionWrapper);
+            };
+
+            const sectionDelay = 400; // ms to wait between sections
+
+            // --- Section 1: Overall Grade ---
+            if (data.score || data.letterGrade) {
+                let html = '<h3>1. Overall Grade</h3>';
+                const gradeClass = getGradeClass(data.letterGrade); 
+                html += '<div class="grade-score-container">';
+                if (data.score) {
+                    html += `<div class="grade-score ${gradeClass}"><strong>Score:</strong> ${data.score}</div>`;
+                }
+                if (data.letterGrade) {
+                    html += `<div class="grade-score letter-grade ${gradeClass}"><strong>Letter Grade:</strong> ${data.letterGrade}</div>`;
+                }
+                html += '</div>';
+                
+                appendSection(html);
+                await delay(sectionDelay);
+            }
+
+            // --- Section 2: Correctness Analysis ---
+            if (data.analysis) {
+                let html = '<h3>2. Correctness Analysis</h3>';
+                if (data.analysis.correctEntities) {
+                    html += `<h4>Correct Entities</h4><p class="feedback-item">${sanitize(data.analysis.correctEntities)}</p>`;
+                }
+                if (data.analysis.missingEntities) {
+                    html += `<h4>Missing or Incorrect Entities</h4><p class="feedback-item">${sanitize(data.analysis.missingEntities)}</p>`;
+                }
+                if (data.analysis.correctRelationships) {
+                    html += `<h4>Correct Relationships</h4><p class="feedback-item">${sanitize(data.analysis.correctRelationships)}</p>`;
+                }
+                if (data.analysis.missingRelationships) {
+                    html += `<h4>Missing or Incorrect Relationships</h4><p class="feedback-item">${sanitize(data.analysis.missingRelationships)}</p>`;
+                }
+                // --- MODIFICATION START: Added missing field ---
+                if (data.analysis.primaryKeyAnalysis) {
+                    html += `<h4>Primary Key Analysis</h4><p class="feedback-item">${sanitize(data.analysis.primaryKeyAnalysis)}</p>`;
+                }
+                if (data.analysis.inheritanceAnalysis) {
+                    html += `<h4>Inheritance/Specialization Analysis</h4><p class="feedback-item">${sanitize(data.analysis.inheritanceAnalysis)}</p>`;
+                }
+                // --- MODIFICATION END ---
+                if (data.analysis.cardinalities) {
+                    html += `<h4>Cardinalities</h4><p class="feedback-item">${sanitize(data.analysis.cardinalities)}</p>`;
+                }
+                
+                appendSection(html);
+                await delay(sectionDelay);
+            }
+
+            // --- Section 3: Detailed Feedback ---
+            if (data.feedback) {
+                let html = '<h3>3. Detailed Feedback</h3>';
+                if (data.feedback.strengths) {
+                    html += `<h4>Strengths</h4><p class="feedback-item">${sanitize(data.feedback.strengths)}</p>`;
+                }
+                if (data.feedback.errors) {
+                    html += `<h4>Specific Errors and Misconceptions</h4><p class="feedback-item">${sanitize(data.feedback.errors)}</p>`;
+                }
+                if (data.feedback.missing) {
+                    html += `<h4>Missing Components</h4><p class="feedback-item">${sanitize(data.feedback.missing)}</p>`;
+                }
+                
+                appendSection(html);
+                await delay(sectionDelay);
+            }
+            
+            // --- Section 4: Grading Breakdown ---
+            if (data.breakdown) {
+                let html = '<h3>4. Grading Breakdown</h3>';
+                html += '<div class="grade-breakdown">';
+                if (data.breakdown.entities) {
+                    html += `<div class="breakdown-item"><strong>Entities:</strong> ${data.breakdown.entities} points</div>`;
+                }
+                if (data.breakdown.relationships) {
+                    html += `<div class="breakdown-item"><strong>Relationships:</strong> ${data.breakdown.relationships} points</div>`;
+                }
+                // --- MODIFICATION START: Added missing fields ---
+                if (data.breakdown.inheritance) {
+                    html += `<div class="breakdown-item"><strong>Inheritance/Specialization:</strong> ${data.breakdown.inheritance} points</div>`;
+                }
+                if (data.breakdown.primaryKeys) {
+                    html += `<div class="breakdown-item"><strong>Primary Keys:</strong> ${data.breakdown.primaryKeys} points</div>`;
+                }
+                if (data.breakdown.otherAttributes) {
+                    html += `<div class="breakdown-item"><strong>Other Attributes:</strong> ${data.breakdown.otherAttributes} points</div>`;
+                }
+                // --- MODIFICATION END ---
+                if (data.breakdown.cardinalities) {
+                    html += `<div class="breakdown-item"><strong>Cardinalities & Connections:</strong> ${data.breakdown.cardinalities} points</div>`;
+                }
+                html += '</div>';
+
+                appendSection(html);
+                await delay(sectionDelay);
+            }
+
+            // --- Section 5: Improvement Suggestions ---
+            if (data.suggestions && data.suggestions.length > 0) {
+                let html = '<h3>5. Improvement Suggestions</h3>';
+                data.suggestions.forEach(s => {
+                    if(s) html += `<p class="feedback-item">${s}</p>`;
+                });
+                
+                appendSection(html);
+                await delay(sectionDelay);
+            }
+        }
+
+        // --- Stats Display ---
+        function displayStats() {
+            let statsHTML = '';
+            if(currentData2) {
+                statsHTML = `
+                    <div class="stats-comparison-grid">
+                        <div>
+                            <h3 style="text-align: center; color: var(--google-blue); margin-bottom: 15px;">Student ERD</h3>
+                            <div class="stats stats-file1">
+                                <div class="stat-card"><h3>${currentData1.entities.length}</h3><p>Entities</p></div>
+                                <div class="stat-card"><h3>${currentData1.relationships.length}</h3><p>Relationships</p></div>
+                                <div class="stat-card"><h3>${(currentData1.inheritances || []).length}</h3><p>Inheritance</p></div>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 style="text-align: center; color: var(--text-secondary); margin-bottom: 15px;">TA ERD</h3>
+                            <div class="stats stats-file2">
+                                <div class="stat-card"><h3>${currentData2.entities.length}</h3><p>Entities</p></div>
+                                <div class="stat-card"><h3>${currentData2.relationships.length}</h3><p>Relationships</p></div>
+                                <div class="stat-card"><h3>${(currentData2.inheritances || []).length}</h3><p>Inheritance</p></div>
+                            </div>
+                        </div>
+                    </div>`;
+            } else {
+                statsHTML = `
+                    <div class="stats stats-file1">
+                        <div class="stat-card"><h3>${currentData1.entities.length}</h3><p>Entities</p></div>
+                        <div class="stat-card"><h3>${currentData1.relationships.length}</h3><p>Relationships</p></div>
+                        <div class="stat-card"><h3>${(currentData1.inheritances || []).length}</h3><p>Inheritance</p></div>
+                    </div>`;
+            }
+            statsContainer.innerHTML = statsHTML;
+            document.querySelectorAll('.stat-card').forEach((card, index) => {
+                card.style.animationDelay = `${index * 50}ms`;
+            });
+        }
+
+        // --- Waterfall Animation Function ---
+        function animateWaterfall(container, htmlItems) {
+            container.innerHTML = ''; // Clear previous content
+            htmlItems.forEach((itemHTML, index) => {
+                const div = document.createElement('div');
+                div.innerHTML = itemHTML;
+                const item = div.firstElementChild;
+                item.classList.add('waterfall-item');
+                item.style.animationDelay = `${index * 60}ms`; // Stagger animation
+                container.appendChild(item);
+            });
+        }
+
+        // --- Display Structures ---
+        function displayStructures() {
+            const structureData = generateStructureHTML(currentData1);
+            let structure2Data = null;
+            
+            if(currentData2) {
+                structure2Data = generateStructureHTML(currentData2, true);
+                layoutContainer.innerHTML = `
+                    <div class="comparison-layout">
+                        <div class="diagram-column file1">
+                            <div class="diagram-title file1">Student ERD: ${fileInput1.files[0].name}</div>
+                            <div id="structure1-entities" class="erd-section"></div>
+                            <div id="structure1-relationships" classD="erd-section"></div>
+                            <div id="structure1-inheritances" class="erd-section"></div>
+                        </div>
+                        <div class="diagram-column file2">
+                            <div class="diagram-title file2">TA ERD: ${fileInput2.files[0].name}</div>
+                            <div id="structure2-entities" class="erd-section"></div>
+                            <div id="structure2-relationships" class="erd-section"></div>
+                            <div id="structure2-inheritances" class="erd-section"></div>
+                        </div>
+                    </div>`;
+
+                animateWaterfall(document.getElementById('structure1-entities'), structureData.entities);
+                animateWaterfall(document.getElementById('structure1-relationships'), structureData.relationships);
+                animateWaterfall(document.getElementById('structure1-inheritances'), structureData.inheritances);
+
+                animateWaterfall(document.getElementById('structure2-entities'), structure2Data.entities);
+                animateWaterfall(document.getElementById('structure2-relationships'), structure2Data.relationships);
+                animateWaterfall(document.getElementById('structure2-inheritances'), structure2Data.inheritances);
+
+            } else {
+                layoutContainer.innerHTML = `
+                    <div class="single-layout">
+                        <div class="diagram-column file1">
+                            <div class="diagram-title file1">Student ERD: ${fileInput1.files[0].name}</div>
+                            <div id="structure1-entities" class="erd-section"></div>
+                            <div id="structure1-relationships" class="erd-section"></div>
+                            <div id="structure1-inheritances" class="erd-section"></div>
+                        </div>
+                    </div>`;
+
+                animateWaterfall(document.getElementById('structure1-entities'), structureData.entities);
+                animateWaterfall(document.getElementById('structure1-relationships'), structureData.relationships);
+                animateWaterfall(document.getElementById('structure1-inheritances'), structureData.inheritances);
+            }
+
+            document.querySelectorAll('.diagram-column').forEach((col, index) => {
+                 col.style.animationDelay = `${index * 100}ms`;
+            });
+        }
+
+        // --- Generate Structures HTML ---
+        function generateStructureHTML(data, isFile2 = false) {
+            let entities = [];
+            let relationships = [];
+            let inheritances = [];
+            const pkClass = isFile2 ? 'pk-file2' : 'pk';
+
+            // --- Generate Entities HTML ---
+            if (data.entities && data.entities.length > 0) {
+                entities.push(`<h2 class="section-title">Entities</h2>`);
+                data.entities.forEach(entity => {
+                    let weakClass = entity.is_weak ? ' <span class="text-weak">[WEAK]</span>' : '';
+                    let assocClass = entity.is_associative ? ' <span class="text-weak">[ASSOCIATIVE]</span>' : '';
+                    
+                    let attributesHTML = '<ul>';
+                    if (entity.attributes && entity.attributes.length > 0) {
+                        entity.attributes.forEach(attr => {
+                            const pkClassVal = attr.type === 'key' ? ` class="${pkClass}"` : '';
+                            // --- FIX: Added 🔑 icon back ---
+                            const pkIcon = attr.type === 'key' ? '' : '• '; 
+                            attributesHTML += `<li${pkClassVal}>${pkIcon}${attr.name}</li>`;
+                        });
+                    } else {
+                        attributesHTML += '<li style="color: #999;">No attributes</li>';
+                    }
+                    attributesHTML += '</ul>';
+
+                    // MODIFIED: Added 'collapsed' class by default
+                    entities.push(`
+                        <div class="erd-item entity-item collapsed">
+                            <div class="collapsible-header" onclick="toggleCollapse(this)">
+                                <h3>🏢 ${entity.name.toUpperCase()} ${weakClass}${assocClass}</h3>
+                                <span class="chevron-icon">›</span>
+                            </div>
+                            <div class="attribute-list">${attributesHTML}</div>
+                        </div>
+                    `);
+                });
+            }
+
+            // --- Generate Relationships HTML ---
+            if (data.relationships && data.relationships.length > 0) {
+                relationships.push(`<h2 class="section-title">Relationships</h2>`);
+                data.relationships.forEach(rel => {
+                    // Debug: log relationship type
+                    console.log(`Relationship "${rel.name}": type="${rel.relationship_type}"`);
+
+                    let identifyingClass = rel.is_identifying ? ` <span class="text-identifying">[IDENTIFYING]</span>` : '';
+                    let ternaryClass = rel.relationship_type === 'ternary' ? ` <span class="text-ternary">[TERNARY]</span>` : '';
+                    let unaryClass = rel.relationship_type === 'unary' ? ` <span class="text-ternary">[UNARY]</span>` : '';
+                    let naryClass = rel.relationship_type === 'n-ary' ? ` <span class="text-ternary">[N-ARY]</span>` : '';
+
+                    // Debug: log what labels are being applied
+                    if (ternaryClass) console.log(`  -> Adding [TERNARY] label`);
+                    if (identifyingClass) console.log(`  -> Adding [IDENTIFYING] label`);
+
+                    let attributesHTML = '<ul>';
+                    if (rel.attributes && rel.attributes.length > 0) {
+                        rel.attributes.forEach(attr => {
+                            attributesHTML += `<li>• ${attr.name}</li>`;
+                        });
+                    } else {
+                        attributesHTML += '<li style="color: #999;">No attributes</li>';
+                    }
+                    attributesHTML += '</ul>';
+
+                    let summaryHTML = '';
+                    if (rel.connection_summary) {
+                        // Convert markdown bold and preserve line breaks
+                        let formattedSummary = rel.connection_summary
+                            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                            .replace(/\n/g, '<br>');
+                        summaryHTML = `<div class="connection-summary">${formattedSummary}</div>`;
+                    }
+
+                    // MODIFIED: Added 'collapsed' class by default
+                    relationships.push(`
+                        <div class="erd-item relationship-item collapsed">
+                            <div class="collapsible-header" onclick="toggleCollapse(this)">
+                                <h3>⚡ ${rel.name.toUpperCase()}${identifyingClass}${ternaryClass}${unaryClass}${naryClass}</h3>
+                                <span class="chevron-icon">›</span>
+                            </div>
+                            <div class="attribute-list">
+                                ${summaryHTML}
+                                ${attributesHTML}
+                            </div>
+                        </div>
+                    `);
+                });
+            }
+
+            // --- Generate Inheritance/Specialization HTML ---
+            if (data.inheritances && data.inheritances.length > 0) {
+                inheritances.push(`<h2 class="section-title">Inheritance/Specialization</h2>`);
+                data.inheritances.forEach(inh => {
+                    // Get badge class based on type
+                    const badgeClass = {
+                        'disjoint': 'badge-disjoint',
+                        'union': 'badge-union',
+                        'overlapping': 'badge-overlapping'
+                    }[inh.inheritance_type] || '';
+
+                    // Get type description
+                    const typeDesc = {
+                        'disjoint': 'Disjoint (XOR) - Entity is one subtype only',
+                        'union': 'Union (Total) - Every parent MUST be in at least one subtype',
+                        'overlapping': 'Overlapping (OR) - Can be in multiple subtypes'
+                    }[inh.inheritance_type] || inh.inheritance_type;
+
+                    // Build child entities list
+                    let childrenHTML = '<ul>';
+                    if (inh.child_entities && inh.child_entities.length > 0) {
+                        inh.child_entities.forEach(child => {
+                            childrenHTML += `<li>→ ${child.name}</li>`;
+                        });
+                    } else {
+                        childrenHTML += '<li style="color: #999;">No subtypes</li>';
+                    }
+                    childrenHTML += '</ul>';
+
+                    // Build summary
+                    let summaryHTML = `<div class="connection-summary">
+                        <strong>Type:</strong> ${typeDesc}
+                    </div>`;
+
+                    inheritances.push(`
+                        <div class="erd-item inheritance-item collapsed">
+                            <div class="collapsible-header" onclick="toggleCollapse(this)">
+                                <h3>🔀 ${inh.parent_entity.toUpperCase()}
+                                    <span class="inheritance-badge ${badgeClass}">[${inh.symbol}] ${inh.inheritance_type.toUpperCase()}</span>
+                                </h3>
+                                <span class="chevron-icon">›</span>
+                            </div>
+                            <div class="attribute-list">
+                                ${summaryHTML}
+                                <strong style="color: var(--text-primary);">Subtypes:</strong>
+                                ${childrenHTML}
+                            </div>
+                        </div>
+                    `);
+                });
+            }
+
+            return { entities, relationships, inheritances, connections: [] };
+        }
+
+    </script>
+</body>
+</html>

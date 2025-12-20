@@ -1,0 +1,43 @@
+\chapter{Conclusion}
+\label{chap:conclusion}
+
+This chapter summarizes the contributions of this thesis, discusses limitations and challenges, and proposes directions for future work.
+
+\section{Summary of Contributions}
+
+This thesis presented an automated grading system for Entity-Relationship Diagrams that successfully addresses the key challenges of manual assessment in database design education. The main contributions are:
+
+\textbf{Technical Contributions:}
+\begin{itemize}
+\item Automated ERD parsing system from Draw.io SVG files
+\item Novel JSON prompting methodology for consistent AI grading
+\item Multi-layer architecture with modular component separation
+\item Comprehensive error handling and retry mechanisms
+\end{itemize}
+
+\textbf{Educational Contributions:}
+\begin{itemize}
+\item Reduced grading time from 15-20 minutes to under 10 seconds (110-146x speedup)
+\item Detailed category-level feedback with actionable suggestions
+\item Consistent, deterministic grading eliminating human fatigue effects
+\item Scalability for large classes without compromising quality
+\end{itemize}
+
+\textbf{Research Contributions:}
+\begin{itemize}
+\item Demonstrated AI effectiveness for diagram assessment (100\% within ±5 points accuracy)
+\item Validated reference calibration approach for AI scoring consistency
+\item Established metrics for automated ERD grading quality
+\end{itemize}
+
+\section{Limitations and Challenges}
+
+Current limitations include dependency on a single model answer, Draw.io format requirements, internet/API availability, and limited contextual understanding. Implementation challenges involved handling ERD notation variations, diverse cardinality formats, AI response consistency, and relationship participant extraction.
+
+\section{Future Work}
+
+Short-term enhancements include multi-format support, interactive feedback, partial credit mechanisms, and batch processing. Long-term directions involve fine-tuned AI models, explainable AI integration, adaptive learning systems, and real-time collaborative grading during diagram creation.
+
+\section{Final Remarks}
+
+This research demonstrates that large language models can be effectively applied to visual diagram assessment through appropriate parsing and structured prompting. The system provides a valuable tool for database design education while establishing a foundation for automated assessment of other visual artifacts in computer science education.
