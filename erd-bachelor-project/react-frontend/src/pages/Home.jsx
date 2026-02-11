@@ -18,7 +18,7 @@ function Home() {
             </div>
             <h3 className="feature-title">Visualize ERDs</h3>
             <p className="feature-description">
-              Upload SVG files and convert them into structured, interactive diagrams with entities, relationships, and inheritance hierarchies.
+              Upload SVG, GraphML, or XML files and convert them into structured, interactive diagrams with entities, relationships, and inheritance hierarchies.
             </p>
           </div>
 

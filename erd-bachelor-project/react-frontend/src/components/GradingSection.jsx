@@ -314,6 +314,19 @@ function GradingReport({ data, customRequirements }) {
         {data.analysis && (
           <div className="waterfall-item">
             <h3>2. Correctness Analysis</h3>
+            {data.analysis.correctnessAnalysis && (
+              <>
+                <h4>🎯 System Alignment Check</h4>
+                <p className="feedback-item" style={{
+                  backgroundColor: data.analysis.correctnessAnalysis.includes('System match: YES') ? '#d1fae5' : '#fee2e2',
+                  color: data.analysis.correctnessAnalysis.includes('System match: YES') ? '#065f46' : '#991b1b',
+                  padding: '12px',
+                  borderRadius: '6px',
+                  fontWeight: 'bold',
+                  borderLeft: data.analysis.correctnessAnalysis.includes('System match: YES') ? '3px solid #10b981' : '3px solid #ef4444'
+                }}>{safeRender(data.analysis.correctnessAnalysis)}</p>
+              </>
+            )}
             {data.analysis.correctEntities && (
               <>
                 <h4>Correct Entities</h4>
@@ -323,7 +336,15 @@ function GradingReport({ data, customRequirements }) {
             {data.analysis.missingEntities && (
               <>
                 <h4>Missing or Incorrect Entities</h4>
-                <p className="feedback-item">{safeRender(data.analysis.missingEntities)}</p>
+                {Array.isArray(data.analysis.missingEntities) ? (
+                  <ul className="feedback-list">
+                    {data.analysis.missingEntities.map((entity, idx) => (
+                      <li key={idx}>{entity}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="feedback-item">{safeRender(data.analysis.missingEntities)}</p>
+                )}
               </>
             )}
             {data.analysis.correctRelationships && (
@@ -332,16 +353,47 @@ function GradingReport({ data, customRequirements }) {
                 <p className="feedback-item">{safeRender(data.analysis.correctRelationships)}</p>
               </>
             )}
+            {data.analysis.semiCorrectRelationships && (
+              <>
+                <h4>⚠️ Semi-Correct Relationships (Minor Issues)</h4>
+                <p className="feedback-item" style={{
+                  backgroundColor: '#fef3c7',
+                  color: '#78350f',
+                  padding: '12px',
+                  borderRadius: '6px',
+                  borderLeft: '3px solid #f59e0b',
+                  fontWeight: '500'
+                }}>
+                  {safeRender(data.analysis.semiCorrectRelationships)}
+                </p>
+              </>
+            )}
             {data.analysis.incorrectRelationships && (
               <>
                 <h4>❌ Incorrect Relationships (Semantic Errors)</h4>
-                <p className="feedback-item incorrect-item">{safeRender(data.analysis.incorrectRelationships)}</p>
+                {Array.isArray(data.analysis.incorrectRelationships) ? (
+                  <ul className="feedback-list incorrect-item">
+                    {data.analysis.incorrectRelationships.map((rel, idx) => (
+                      <li key={idx}>{rel}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="feedback-item incorrect-item">{safeRender(data.analysis.incorrectRelationships)}</p>
+                )}
               </>
             )}
             {data.analysis.missingRelationships && (
               <>
                 <h4>Missing Relationships</h4>
-                <p className="feedback-item">{safeRender(data.analysis.missingRelationships)}</p>
+                {Array.isArray(data.analysis.missingRelationships) ? (
+                  <ul className="feedback-list">
+                    {data.analysis.missingRelationships.map((rel, idx) => (
+                      <li key={idx}>{rel}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="feedback-item">{safeRender(data.analysis.missingRelationships)}</p>
+                )}
               </>
             )}
             {data.analysis.primaryKeyAnalysis && (

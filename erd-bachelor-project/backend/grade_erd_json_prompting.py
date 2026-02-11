@@ -97,7 +97,9 @@ def create_json_prompt(teacher_erd, student_erd, custom_requirements=None):
         "instructions": {
             "mode": "semantic_equivalence",
             "philosophy": "human_teacher_not_robot",
-            "primary_focus": "relationship_correctness"
+            "primary_focus": "relationship_correctness",
+            "CRITICAL_FIRST_STEP": "BEFORE grading, verify BOTH ERDs model the SAME business domain. Learning platform ≠ HR management. School = University (both education). If different domains → System match: NO.",
+            "CONSISTENCY_REQUIREMENT": "You MUST be CONSISTENT. Grading the same ERD multiple times MUST produce the SAME score. Use the reference examples to calibrate your grading accurately and consistently."
         },
         "REASONING_FRAMEWORK": {
             "YOU_ARE_A_TEACHER_NOT_A_ROBOT": {
@@ -477,6 +479,24 @@ def create_json_prompt(teacher_erd, student_erd, custom_requirements=None):
             ]
         },
         "STEP_BY_STEP_GRADING_WORKFLOW": {
+            "STEP_0_SYSTEM_ALIGNMENT_CHECK": {
+                "action": "FIRST verify both ERDs model the SAME SYSTEM - look at main entities to identify the domain",
+                "identify_domains": {
+                    "teacher_domain": "Look at teacher ERD main entities - what is the business/system domain? (e.g., education/school, healthcare/hospital, e-commerce/shopping, HR/employee management, banking/finance, travel/tourism, library, hotel, etc.)",
+                    "student_domain": "Look at student ERD main entities - what is the business/system domain?",
+                    "compare": "Are these the SAME business domain? Learning platform vs HR management = DIFFERENT. School vs University = SAME. Hospital vs Clinic = SAME."
+                },
+                "set_correctnessAnalysis": {
+                    "if_same": "System match: YES. Both model [domain] system",
+                    "if_different": "System match: NO. Teacher: [domain], Student: [different domain]"
+                },
+                "CRITICAL_EXAMPLES": {
+                    "MATCH_YES": "Teacher: school system (Student, Course, Teacher) + Student: university system (Learner, Class, Professor) → YES, both education",
+                    "MATCH_NO": "Teacher: learning platform (Learner, Course) + Student: HR system (Employee, Department) → NO, different domains",
+                    "MATCH_NO_2": "Teacher: hospital (Patient, Doctor) + Student: travel agency (Passenger, Flight) → NO, different domains"
+                },
+                "GRADING_NOTE": "If systems don't match, grade the ERD normally. The system will automatically apply a 20-point penalty in post-processing."
+            },
             "STEP_1_ANALYZE_STUDENT_ERD": {
                 "action": "Read and understand the student's ERD completely",
                 "ask_yourself": "What system is this modeling? What are the key business rules?"
@@ -490,6 +510,7 @@ def create_json_prompt(teacher_erd, student_erd, custom_requirements=None):
                 "action": "For EACH model relationship, find corresponding student relationship",
                 "matching_algorithm": "Look at entities connected + cardinality, NOT just relationship name",
                 "reasoning_example": "Model: 'enrolls' (Student M:N Course). Student: 'takes' (Student M:N Course). Ask: Do they connect the same entities? Yes. Same cardinality? Yes. CONCLUSION: These are the SAME relationship. FULL CREDIT.",
+                "CRITICAL_DO_NOT_MARK_AS_MISSING": "If student has a relationship with SAME entities connected + SAME cardinality but DIFFERENT name → This is NOT missing. This is CORRECT. Student just named it differently. Example: Teacher has 'enrolls', Student has 'registers' → BOTH connect Student-Course with M:N → NOT MISSING, it's PRESENT with different name.",
                 "critical_rule": "If entities + cardinality match, relationship is CORRECT regardless of name",
                 "SPECIAL_CASE_TERNARY_RELATIONSHIPS": {
                     "detection": "Check relationship_type field - if 'ternary', this is a three-way relationship",
@@ -528,12 +549,18 @@ def create_json_prompt(teacher_erd, student_erd, custom_requirements=None):
                 "action": "Look at overall ERD quality and correctness",
                 "ask_yourself": "If this student came to my office hours, would I say 'this is wrong' or 'this is good work'?",
                 "principle": "Grade based on UNDERSTANDING and CORRECTNESS, not SIMILARITY to model answer",
+                "CRITICAL_CONSISTENCY_RULES": {
+                    "rule_1": "If relationship connects SAME entities with SAME cardinality → CORRECT (even if name differs)",
+                    "rule_2": "Count errors OBJECTIVELY: missing PK = specific deduction, missing relationship = specific deduction",
+                    "rule_3": "SAME errors MUST result in SAME score EVERY TIME",
+                    "rule_4": "Calculate breakdown FIRST (entities + relationships + cardinalities + PKs + inheritance), THEN set final score"
+                },
                 "final_calibration_check": {
-                    "step_1": "Count how many relationships are missing or incorrect",
-                    "step_2": "Compare to reference examples - does the error count match?",
-                    "step_3": "If student has many errors like 'Lynx' (73.5), score should be in 70-75 range",
-                    "step_4": "If student has minimal errors like 'top 1' (98.5), score should be in 95-99 range",
-                    "step_5": "Adjust score to match calibration examples accurately"
+                    "step_1": "Count how many relationships are TRULY missing (not just renamed)",
+                    "step_2": "Count how many entities are missing primary keys",
+                    "step_3": "Calculate breakdown scores based on these EXACT counts",
+                    "step_4": "Verify breakdown adds up to final score (entities/20 + relationships/40 + cardinalities/10 + primaryKeys/20 + inheritance/10 = total/100)",
+                    "step_5": "BE CONSISTENT - grading same ERD must give same score"
                 }
             }
         },
@@ -542,6 +569,7 @@ def create_json_prompt(teacher_erd, student_erd, custom_requirements=None):
             "required_fields": {
                 "score": "string in format XX/100",
                 "analysis": {
+                    "correctnessAnalysis": "string (Format: 'System match: [YES/NO]. Teacher: [domain], Student: [domain]', max 100 chars. ALWAYS include this field FIRST before grading)",
                     "correctEntities": "string (BRIEF summary with count only, max 50 chars)",
                     "missingEntities": "string (list ONLY TOP 3-5 most critical, max 100 chars)",
                     "correctRelationships": "string (count only, e.g. '19/33 relationships correct', max 50 chars)",
@@ -628,9 +656,9 @@ def calculate_breakdown_from_grade(grade, relationship_count):
         }
 
 
-# Example usage:
+
 if __name__ == "__main__":
-    # Test the JSON prompt structure
+
     teacher_erd = {"entities": [], "relationships": []}  # Example
     student_erd = {"entities": [], "relationships": []}  # Example
 

@@ -60,7 +60,7 @@ function FileUploader({ id, label, onChange, fileName, isTeacher = false }) {
           <input
             id={id}
             type="file"
-            accept=".svg"
+            accept=".svg,.graphml,.xml"
             onChange={onChange}
             style={{ display: 'none' }}
           />

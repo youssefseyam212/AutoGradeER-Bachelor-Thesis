@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
 import Home from './pages/Home';
 import Visualizer from './pages/Visualizer';
+import SchemaGrader from './pages/SchemaGrader';
 import './styles/App.css';
 
 function App() {
@@ -12,6 +13,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/visualizer" element={<Visualizer />} />
+          <Route path="/schema-grader" element={<SchemaGrader />} />
         </Routes>
       </div>
     </Router>

@@ -30,7 +30,7 @@ function Visualizer() {
 
   const handleConvert = async () => {
     if (!file1) {
-      alert('Please upload the Student ERD (SVG File) to begin.');
+      alert('Please upload the Student ERD file to begin.');
       return;
     }
 
@@ -80,13 +80,13 @@ function Visualizer() {
       <div className="uploader-grid">
         <FileUploader
           id="file1"
-          label="Student ERD (SVG File)"
+          label="Student ERD (SVG/GraphML/XML)"
           onChange={handleFile1Change}
           fileName={file1Name}
         />
         <FileUploader
           id="file2"
-          label="Model Answer ERD (SVG File)"
+          label="Model Answer ERD (SVG/GraphML/XML)"
           onChange={handleFile2Change}
           fileName={file2Name}
           isTeacher={true}
@@ -109,7 +109,7 @@ function Visualizer() {
         </p>
       )}
 
-      {loading && <Loader text="Processing SVG files..." />}
+      {loading && <Loader text="Processing files..." />}
 
       {!loading && currentData1 && (
         <>
@@ -138,7 +138,7 @@ function Visualizer() {
 
       {!loading && !currentData1 && !error && (
         <p style={{ color: 'var(--text-secondary)', textAlign: 'center', marginTop: '50px' }}>
-          Please upload an SVG file to get started.
+          Please upload an ERD file (SVG, GraphML, or XML) to get started.
         </p>
       )}
     </div>

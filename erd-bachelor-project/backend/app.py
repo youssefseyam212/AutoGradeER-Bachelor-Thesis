@@ -9,6 +9,8 @@ from flask_cors import CORS  # <--- CHANGE 1: Import CORS
 
 from svgToXml.convertion import svg_to_drawio_erd
 from svgToXml.test import ERDParser
+from gmlToDrawio import graphml_to_erd_json
+from grade_erd_schema import grade_with_schema
 
 load_dotenv()
 
@@ -22,11 +24,15 @@ app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}}) 
 
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB uploads
-ALLOWED_EXT = {'svg'}
+ALLOWED_EXT = {'svg', 'graphml', 'xml'}
 
 # --- helpers ---
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXT
+
+def is_graphml_file(filename):
+    """Check if file is a GraphML file"""
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'graphml', 'xml'}
 
 def get_cardinality_type(card_str):
     """Helper to determine cardinality type from a label string."""
@@ -465,15 +471,46 @@ def api_convert():
         return jsonify({'error': 'No file uploaded (field "file")'}), 400
     f = request.files['file']
     if not allowed_file(f.filename):
-        return jsonify({'error': 'Only SVG allowed (.svg)'}), 400
+        return jsonify({'error': 'Only SVG, GraphML, or XML files allowed (.svg, .graphml, .xml)'}), 400
 
-    tmp_dir = tempfile.mkdtemp(prefix='svg_api_')
-    svg_path = os.path.join(tmp_dir, secure_filename(f.filename))
-    f.save(svg_path)
+    tmp_dir = tempfile.mkdtemp(prefix='file_api_')
+    file_path = os.path.join(tmp_dir, secure_filename(f.filename))
+    f.save(file_path)
+
+    # Check if it's a GraphML file
+    if is_graphml_file(f.filename):
+        try:
+            # Read file content
+            with open(file_path, 'r', encoding='utf-8') as fh:
+                file_content = fh.read()
+
+            # Parse GraphML directly to ERD JSON
+            erd_json = graphml_to_erd_json(file_content)
+
+            if erd_json is None:
+                return jsonify({
+                    'error': 'GraphML parsing failed',
+                    'message': 'Could not parse GraphML file. Please ensure it is a valid yEd GraphML file with ERD entities, attributes, and relationships.'
+                }), 400
+
+            print("="*80)
+            print("START: ERD_JSON FROM /api/convert (GraphML)")
+            print("="*80)
+            print(json.dumps(erd_json, indent=2))
+            print("="*80)
+            print("END: ERD_JSON FROM /api/convert (GraphML)")
+            print("="*80)
+
+            return jsonify({'xml': None, 'erd': erd_json, 'source': 'graphml'})
+
+        except Exception as e:
+            return jsonify({'error': 'GraphML conversion failed', 'message': str(e)}), 500
+
+    # Otherwise, process as SVG
     xml_out = os.path.join(tmp_dir, secure_filename(f.filename).rsplit('.',1)[0] + '.xml')
 
     try:
-        result = svg_to_drawio_erd(svg_path, xml_out)
+        result = svg_to_drawio_erd(file_path, xml_out)
         if result is None:
             return jsonify({
                 'error': 'No Draw.io data found',
@@ -521,10 +558,10 @@ def api_convert():
         print("="*80)
         print(json.dumps(erd_json, indent=2))
         print("="*80)
-        print("END: ERD_JSON FROM /api/convert")
+        print("END: ERD_JSON FROM /api/convert (SVG)")
         print("="*80)
 
-        return jsonify({'xml': xml_text, 'erd': erd_json})
+        return jsonify({'xml': xml_text, 'erd': erd_json, 'source': 'svg'})
 
     except Exception as e:
         return jsonify({'error': 'Failed to serialize ERD data', 'message': str(e)}), 500
@@ -563,6 +600,25 @@ def api_grade():
 
     except Exception as e:
         return jsonify({'error': 'Grading failed', 'message': str(e)}), 500
+
+@app.route('/api/grade_with_schema', methods=['POST'])
+def api_grade_with_schema():
+    """Grade student ERD using evaluation schema rubric"""
+    try:
+        data = request.get_json()
+        if not data or 'student_erd' not in data or 'evaluation_schema' not in data:
+            return jsonify({'error': 'Missing student_erd or evaluation_schema in request body'}), 400
+
+        student_erd = data['student_erd']
+        evaluation_schema = data['evaluation_schema']
+
+        # Grade using schema
+        grading_results = grade_with_schema(student_erd, evaluation_schema)
+
+        return jsonify(grading_results)
+
+    except Exception as e:
+        return jsonify({'error': 'Schema-based grading failed', 'message': str(e)}), 500
 
 def convert_to_structured_format(erd_data):
     """
@@ -1044,6 +1100,42 @@ RESPONSE FORMAT - EXACTLY THIS STRUCTURE:
                     result['_score_recalculated'] = True
             except Exception as calc_err:
                 print(f"Warning: Could not recalculate score: {calc_err}")
+
+        # Check for system mismatch and apply 20-point penalty
+        if 'analysis' in result and 'correctnessAnalysis' in result['analysis']:
+            correctness_analysis = result['analysis']['correctnessAnalysis']
+
+            # Check if systems don't match
+            if isinstance(correctness_analysis, str) and 'System match: NO' in correctness_analysis:
+                print("="*80)
+                print("SYSTEM MISMATCH DETECTED - Applying 20-point penalty")
+                print(f"Correctness Analysis: {correctness_analysis}")
+                print("="*80)
+
+                # Extract current score
+                current_score_str = result.get('score', '0/100')
+                try:
+                    current_score = int(current_score_str.split('/')[0])
+
+                    # Deduct 20 points (minimum 0)
+                    penalized_score = max(0, current_score - 20)
+
+                    # Update the score
+                    result['score'] = f"{penalized_score}/100"
+
+                    # Add note to feedback
+                    if 'feedback' in result and isinstance(result['feedback'], dict):
+                        if 'errors' in result['feedback']:
+                            result['feedback']['errors'] = f"SYSTEM MISMATCH PENALTY (-20 points): Student modeled wrong system. {result['feedback']['errors']}"
+                        else:
+                            result['feedback']['errors'] = "SYSTEM MISMATCH PENALTY (-20 points): Student modeled a completely different system than required."
+
+                    print(f"Original score: {current_score}/100")
+                    print(f"Penalized score: {penalized_score}/100")
+                    print("="*80)
+
+                except (ValueError, IndexError) as e:
+                    print(f"Warning: Could not apply system mismatch penalty: {e}")
 
         result['_debug_prompt'] = prompt  # Store the prompt for debugging
         return result
